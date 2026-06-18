@@ -66,10 +66,16 @@
             </nav>
         </aside>
 
+        <!-- 모바일 사이드바 배경 -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
         <!-- 메인 콘텐츠 -->
         <main class="main-content">
             <!-- 헤더 -->
             <header class="header">
+                <button class="mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="메뉴 열기">
+                    <i class="fas fa-bars"></i>
+                </button>
                 <h2 class="page-title">대시보드</h2>
                 <div class="header-actions" id="headerActions">
                     <button class="btn btn-primary" id="addProjectBtn">
@@ -571,6 +577,9 @@
     <div class="modal" id="projectDetailModal">
         <div class="modal-content modal-large">
             <div class="modal-header">
+                <button class="modal-back-btn" id="projectDetailBackBtn" type="button" aria-label="뒤로가기">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
                 <h3 id="projectDetailTitle">프로젝트 상세</h3>
                 <button class="close-btn" id="closeProjectDetailModal">
                     <i class="fas fa-times"></i>
