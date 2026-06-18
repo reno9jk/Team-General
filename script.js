@@ -471,8 +471,13 @@ class App {
             btn.addEventListener('click', (e) => {
                 const view = e.currentTarget.dataset.view;
                 this.switchView(view);
+                this.closeMobileMenu();
             });
         });
+
+        // 모바일 메뉴
+        document.getElementById('mobileMenuBtn').addEventListener('click', () => this.toggleMobileMenu());
+        document.getElementById('sidebarOverlay').addEventListener('click', () => this.closeMobileMenu());
 
         // 연도 선택
         document.getElementById('yearSelect').addEventListener('change', (e) => {
@@ -532,6 +537,7 @@ class App {
 
         // 프로젝트 상세 모달
         document.getElementById('closeProjectDetailModal').addEventListener('click', () => this.closeProjectDetailModal());
+        document.getElementById('projectDetailBackBtn').addEventListener('click', () => this.closeProjectDetailModal());
         document.getElementById('addMemberBtn').addEventListener('click', () => this.openMemberModal());
         document.getElementById('addMilestoneBtn').addEventListener('click', () => this.openMilestoneModal());
 
@@ -607,6 +613,20 @@ class App {
                 this.renderEvaluation();
             });
         });
+    }
+
+    toggleMobileMenu() {
+        const sidebar = document.querySelector('.sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        const isOpen = sidebar.classList.toggle('open');
+        overlay.classList.toggle('active', isOpen);
+        document.body.style.overflow = isOpen ? 'hidden' : '';
+    }
+
+    closeMobileMenu() {
+        document.querySelector('.sidebar').classList.remove('open');
+        document.getElementById('sidebarOverlay').classList.remove('active');
+        document.body.style.overflow = '';
     }
 
     // 대시보드 카드에서 상태 필터 적용하며 프로젝트 뷰로 이동
