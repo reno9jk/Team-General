@@ -107,13 +107,8 @@ class FirebaseDataStore {
             <span class="demo-banner-text">${bannerMsg}</span>
             ${!isFile ? `<button class="demo-banner-login-btn" onclick="app && app.store && app.store.showLoginModal()">로그인하기</button>` : ''}
         `;
-        // 앱 컨테이너 앞에 삽입
-        const appContainer = document.querySelector('.app-container');
-        if (appContainer) {
-            document.body.insertBefore(banner, appContainer);
-        } else {
-            document.body.prepend(banner);
-        }
+        // body 하단에 삽입
+        document.body.appendChild(banner);
     }
 
     // 데모 모드에서 저장/수정/삭제 차단

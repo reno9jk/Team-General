@@ -2540,21 +2540,24 @@ a:hover {
    ============================================================ */
 .demo-banner {
     position: fixed;
-    top: 0;
+    bottom: 0;
+    top: auto;
     left: 0;
     right: 0;
-    z-index: 9999;
+    z-index: 950;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 10px;
-    padding: 10px 20px;
+    padding: 10px 16px;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
     background: #fff3cd;
-    border-bottom: 2px solid #f0c04a;
+    border-top: 2px solid #f0c04a;
+    border-bottom: none;
     font-size: 13px;
     color: #5a4500;
     font-weight: 500;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    box-shadow: 0 -2px 8px rgba(0,0,0,0.08);
 }
 
 .demo-banner-icon {
@@ -2585,9 +2588,32 @@ a:hover {
     background: #e0a800;
 }
 
-/* 데모 배너가 표시될 때 앱 컨테이너를 아래로 밀기 */
-body:has(.demo-banner) .app-container {
-    margin-top: 44px;
+/* 데모 배너가 있을 때 토스트를 배너 위로 */
+body:has(.demo-banner) .demo-toast {
+    bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+}
+
+/* 데모 배너가 있을 때 하단 콘텐츠가 가려지지 않도록 */
+body:has(.demo-banner) .main-content {
+    padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+}
+
+@media (max-width: 600px) {
+    .demo-banner {
+        flex-wrap: wrap;
+        font-size: 12px;
+        gap: 6px;
+        padding: 8px 12px;
+        padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+    }
+    .demo-banner-text {
+        flex: 1 1 100%;
+        text-align: center;
+        max-width: none;
+    }
+    body:has(.demo-banner) .main-content {
+        padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+    }
 }
 
 /* 데모 모드 토스트 알림 */
