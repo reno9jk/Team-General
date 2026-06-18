@@ -165,7 +165,7 @@ class DataStore {
         const totalProjects = projects.length;
         const completedProjects = projects.filter(p => p.status === 'completed').length;
         const inProgressProjects = projects.filter(p => p.status === 'in-progress').length;
-        const totalMembers = members.length;
+        const totalMembers = new Set(members.map(m => m.name)).size; // 이름 기준 중복 제거
         
         return { totalProjects, completedProjects, inProgressProjects, totalMembers };
     }
@@ -267,12 +267,12 @@ class DataStore {
         return diffDays;
     }
 
-    // 종합평가 - 구성원별 전체 프로젝트 성과 집계 (프로젝트 가중치 반영, 연도별 필터링)
+    // 종합평가 - 구성원별 전체 프로젝트 성과 집계 (프로젝트별 합산, 연도별 필터링)
+    // 로직: 프로젝트마다 점수를 계산해 가중치(÷10) 적용 후 합산
+    //       → 프로젝트를 많이 참여할수록 추가 점수 획득
     getComprehensiveEvaluation(band = 'all', year = null) {
-        // 연도별 필터링된 구성원 가져오기
         let membersToEvaluate = year ? this.getMembersByYear(year) : this.members;
-        
-        // 구성원별로 그룹화
+
         const memberMap = new Map();
 
         membersToEvaluate.forEach(member => {
@@ -286,75 +286,77 @@ class DataStore {
                     band: member.band,
                     projects: [],
                     roles: [],
+                    projectBreakdown: [],   // 팝업용 프로젝트별 상세
                     weightedProgressSum: 0,
                     weightedContributionSum: 0,
                     weightedCollaborationSum: 0,
                     weightedLeadershipSum: 0,
                     weightedSkillSum: 0,
-                    totalWeight: 0
+                    totalWeight: 0,
+                    totalScore: 0           // 프로젝트별 점수 누적 합산
                 });
             }
 
             const data = memberMap.get(member.name);
-            if (!data.projects.includes(projectName)) {
-                data.projects.push(projectName);
-            }
-            if (member.role && !data.roles.includes(member.role)) {
-                data.roles.push(member.role);
-            }
-            // 가중치를 적용한 합계
-            data.weightedProgressSum += (member.progress || 0) * projectWeight;
-            data.weightedContributionSum += (member.contribution || 0) * projectWeight;
-            data.weightedCollaborationSum += (member.collaboration || 5) * projectWeight;
-            data.weightedLeadershipSum += (member.leadership || 5) * projectWeight;
-            data.weightedSkillSum += (member.skill || 5) * projectWeight;
-            data.totalWeight += projectWeight;
+            if (!data.projects.includes(projectName)) data.projects.push(projectName);
+            if (member.role && !data.roles.includes(member.role)) data.roles.push(member.role);
+
+            const progress      = member.progress     || 0;
+            const contribution  = member.contribution  || 0;
+            const collaboration = member.collaboration || 5;
+            const leadership    = member.leadership    || 5;
+            const skill         = member.skill         || 5;
+            const evalScore     = project ? (project.evalScore !== undefined ? project.evalScore : 100) : 100;
+
+            // 프로젝트 단위 점수 (최대 95점)
+            const projectScore = parseFloat((
+                (progress * 0.25) +
+                (contribution * 2) +
+                (collaboration * 1.5) +
+                (leadership * 1.5) +
+                (skill * 2)
+            ).toFixed(1));
+
+            // 1차 결과: 가중치 반영 점수
+            const weightedScore = parseFloat((projectScore * projectWeight / 10).toFixed(1));
+
+            // 최종 결과: 프로젝트 최종 평가(%) 적용
+            const finalScore = parseFloat((weightedScore * evalScore / 100).toFixed(1));
+
+            data.projectBreakdown.push({ projectName, projectWeight, evalScore, progress, contribution, collaboration, leadership, skill, projectScore, weightedScore, finalScore });
+
+            // 가중 평균용 누적 (테이블 칼럼 표시용)
+            data.weightedProgressSum     += progress      * projectWeight;
+            data.weightedContributionSum += contribution  * projectWeight;
+            data.weightedCollaborationSum+= collaboration * projectWeight;
+            data.weightedLeadershipSum   += leadership    * projectWeight;
+            data.weightedSkillSum        += skill         * projectWeight;
+            data.totalWeight             += projectWeight;
+
+            // 최종 점수 합산
+            data.totalScore += finalScore;
         });
 
-        // 가중 평균 계산 및 종합점수 산출
         let results = Array.from(memberMap.values()).map(data => {
-            const avgProgress = data.totalWeight > 0 ? Math.round(data.weightedProgressSum / data.totalWeight) : 0;
-            const avgContribution = data.totalWeight > 0 ? (data.weightedContributionSum / data.totalWeight).toFixed(1) : 0;
-            const avgCollaboration = data.totalWeight > 0 ? (data.weightedCollaborationSum / data.totalWeight).toFixed(1) : 0;
-            const avgLeadership = data.totalWeight > 0 ? (data.weightedLeadershipSum / data.totalWeight).toFixed(1) : 0;
-            const avgSkill = data.totalWeight > 0 ? (data.weightedSkillSum / data.totalWeight).toFixed(1) : 0;
-
-            // 종합점수: (진척도 * 0.25) + (기여도 * 2) + (협업 * 1.5) + (주도성 * 1.5) + (실력 * 2)
-            // 최대 100점 기준으로 환산
-            const totalScore = (
-                (avgProgress * 0.25) +
-                (parseFloat(avgContribution) * 2) +
-                (parseFloat(avgCollaboration) * 1.5) +
-                (parseFloat(avgLeadership) * 1.5) +
-                (parseFloat(avgSkill) * 2)
-            ).toFixed(1);
-
+            const w = data.totalWeight;
             return {
                 name: data.name,
                 band: data.band,
                 projects: data.projects,
                 roles: data.roles,
-                avgProgress,
-                avgContribution: parseFloat(avgContribution),
-                avgCollaboration: parseFloat(avgCollaboration),
-                avgLeadership: parseFloat(avgLeadership),
-                avgSkill: parseFloat(avgSkill),
-                totalScore: parseFloat(totalScore)
+                projectBreakdown: data.projectBreakdown,
+                avgProgress:      w > 0 ? Math.round(data.weightedProgressSum / w) : 0,
+                avgContribution:  w > 0 ? parseFloat((data.weightedContributionSum / w).toFixed(1)) : 0,
+                avgCollaboration: w > 0 ? parseFloat((data.weightedCollaborationSum / w).toFixed(1)) : 0,
+                avgLeadership:    w > 0 ? parseFloat((data.weightedLeadershipSum / w).toFixed(1)) : 0,
+                avgSkill:         w > 0 ? parseFloat((data.weightedSkillSum / w).toFixed(1)) : 0,
+                totalScore:       parseFloat(data.totalScore.toFixed(1))
             };
         });
 
-        // 밴드 필터링
-        if (band !== 'all') {
-            results = results.filter(r => r.band === band);
-        }
-
-        // 종합점수 기준 정렬
+        if (band !== 'all') results = results.filter(r => r.band === band);
         results.sort((a, b) => b.totalScore - a.totalScore);
-
-        // 순위 부여
-        results.forEach((r, index) => {
-            r.rank = index + 1;
-        });
+        results.forEach((r, i) => { r.rank = i + 1; });
 
         return results;
     }
@@ -375,6 +377,13 @@ class DataStore {
             avgScore: avgScore
         };
     }
+}
+
+// 구성원 아바타 표시용 — 이름 앞 2글자
+function getMemberInitials(name) {
+    if (!name) return '';
+    const trimmed = name.trim();
+    return trimmed.slice(0, 2);
 }
 
 // 앱 클래스
@@ -400,6 +409,8 @@ class App {
         this.currentContributorViewMode = 'individual'; // 'individual' 또는 'consolidated'
         this.currentProjectMemberBandFilter = 'all';
         this.currentEvalBandFilter = 'all';
+        this.currentStatusFilter = 'all'; // 프로젝트 상태 필터
+        this.dashboardShowAllProjects = false; // 대시보드 진척률 박스 전체 보기
         this.currentYear = 2026; // 기본 연도: 2026년
         
         this.init();
@@ -427,18 +438,9 @@ class App {
 
     async migrateDataOnce() {
         if (this.store instanceof FirebaseDataStore) {
-            // Firebase 초기화 및 사용자 인증 완료 대기
-            let attempts = 0;
-            const maxAttempts = 50; // 최대 5초 대기
-            
-            while (attempts < maxAttempts && (!this.store.initialized || !this.store.userId)) {
-                await new Promise(resolve => setTimeout(resolve, 100));
-                attempts++;
-            }
-            
             // 마이그레이션 완료 플래그 확인
             const migrated = localStorage.getItem('firebase_migrated');
-            if (!migrated && this.store.initialized && this.store.userId) {
+            if (!migrated && this.store.initialized) {
                 const hasLocalData = localStorage.getItem('projects') || 
                                      localStorage.getItem('members') || 
                                      localStorage.getItem('milestones');
@@ -448,13 +450,8 @@ class App {
                         '마이그레이션 후 PC와 스마트폰에서 동일한 데이터를 사용할 수 있습니다.'
                     );
                     if (confirm) {
-                        try {
-                            await this.store.migrateFromLocalStorage();
-                            localStorage.setItem('firebase_migrated', 'true');
-                        } catch (error) {
-                            console.error('마이그레이션 실패:', error);
-                            alert('데이터 마이그레이션에 실패했습니다. 다시 시도해주세요.');
-                        }
+                        await this.store.migrateFromLocalStorage();
+                        localStorage.setItem('firebase_migrated', 'true');
                     }
                 }
             }
@@ -483,6 +480,17 @@ class App {
             this.render();
         });
 
+        // 프로젝트 상태 필터 탭
+        document.querySelectorAll('#projectStatusFilter .filter-tab').forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                const status = e.currentTarget.dataset.status;
+                this.currentStatusFilter = status;
+                document.querySelectorAll('#projectStatusFilter .filter-tab').forEach(t => t.classList.remove('active'));
+                e.currentTarget.classList.add('active');
+                this.renderProjects();
+            });
+        });
+
         // 프로젝트 모달
         document.getElementById('addProjectBtn').addEventListener('click', () => this.openProjectModal());
         document.getElementById('closeProjectModal').addEventListener('click', () => this.closeProjectModal());
@@ -496,6 +504,14 @@ class App {
 
         // 구성원 목록에서 구성원 추가 버튼
         document.getElementById('addMemberFromListBtn').addEventListener('click', () => this.openMemberModalFromList());
+
+        // 구성원 리스트 관리 버튼
+        document.getElementById('memberProfileListBtn').addEventListener('click', () => this.openMemberProfileListModal());
+        document.getElementById('closeMemberProfileListModal').addEventListener('click', () => this.closeMemberProfileListModal());
+        document.getElementById('addProfileBtn').addEventListener('click', () => this.addMemberProfile());
+
+        // 종합점수 계산 팝업
+        document.getElementById('closeScoreBreakdownModal').addEventListener('click', () => this.closeScoreBreakdownModal());
 
         // 진척도/기여도/협업기여/주도성 슬라이더
         document.getElementById('memberProgress').addEventListener('input', (e) => {
@@ -523,15 +539,6 @@ class App {
         document.getElementById('closeMilestoneModal').addEventListener('click', () => this.closeMilestoneModal());
         document.getElementById('cancelMilestoneBtn').addEventListener('click', () => this.closeMilestoneModal());
         document.getElementById('milestoneForm').addEventListener('submit', (e) => this.handleMilestoneSubmit(e));
-
-        // 모달 외부 클릭시 닫기
-        document.querySelectorAll('.modal').forEach(modal => {
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    modal.classList.remove('active');
-                }
-            });
-        });
 
         // 구성원 뷰 밴드 필터
         document.querySelectorAll('#memberBandFilter .filter-tab').forEach(tab => {
@@ -602,6 +609,16 @@ class App {
         });
     }
 
+    // 대시보드 카드에서 상태 필터 적용하며 프로젝트 뷰로 이동
+    switchToProjectsWithFilter(status) {
+        this.currentStatusFilter = status;
+        // 필터 탭 UI 동기화
+        document.querySelectorAll('#projectStatusFilter .filter-tab').forEach(tab => {
+            tab.classList.toggle('active', tab.dataset.status === status);
+        });
+        this.switchView('projects');
+    }
+
     switchView(view) {
         this.currentView = view;
         
@@ -626,16 +643,20 @@ class App {
         // 헤더 버튼 동적 변경
         const addProjectBtn = document.getElementById('addProjectBtn');
         const addMemberFromListBtn = document.getElementById('addMemberFromListBtn');
+        const memberProfileListBtn = document.getElementById('memberProfileListBtn');
         
         if (view === 'members') {
             addProjectBtn.style.display = 'none';
             addMemberFromListBtn.style.display = 'inline-flex';
+            memberProfileListBtn.style.display = 'inline-flex';
         } else if (view === 'evaluation') {
             addProjectBtn.style.display = 'none';
             addMemberFromListBtn.style.display = 'none';
+            memberProfileListBtn.style.display = 'none';
         } else {
             addProjectBtn.style.display = 'inline-flex';
             addMemberFromListBtn.style.display = 'none';
+            memberProfileListBtn.style.display = 'none';
         }
 
         this.render();
@@ -679,9 +700,12 @@ class App {
         document.getElementById('bandBAvgProgress').textContent = bandBStats.avgProgress + '%';
         document.getElementById('bandBAvgContribution').textContent = bandBStats.avgContribution;
 
-        // 프로젝트 진행률 렌더링 (연도별 필터)
+        // 프로젝트 진행률 렌더링 (가중치 내림차순, 연도별 필터)
         const progressList = document.getElementById('projectProgressList');
-        const yearProjects = this.store.getProjectsByYear(this.currentYear);
+        const yearProjects = this.store.getProjectsByYear(this.currentYear)
+            .slice().sort((a, b) => (b.weight || 5) - (a.weight || 5));
+        const DASHBOARD_PROJECT_LIMIT = 8;
+
         if (yearProjects.length === 0) {
             progressList.innerHTML = `
                 <div class="empty-state">
@@ -690,13 +714,21 @@ class App {
                 </div>
             `;
         } else {
-            progressList.innerHTML = yearProjects.slice(0, 5).map(project => {
+            const toShow = this.dashboardShowAllProjects
+                ? yearProjects
+                : yearProjects.slice(0, DASHBOARD_PROJECT_LIMIT);
+
+            const rows = toShow.map(project => {
                 const progress = this.store.getProjectProgress(project.id);
+                const weight = project.weight || 5;
                 return `
                     <div class="progress-item">
                         <div class="progress-item-header">
-                            <span>${project.name}</span>
-                            <span>${progress}%</span>
+                            <span class="progress-item-name">${project.name}</span>
+                            <div class="progress-item-right">
+                                <span class="weight-badge weight-${weight} small">${weight}</span>
+                                <span class="progress-item-pct">${progress}%</span>
+                            </div>
                         </div>
                         <div class="progress-bar">
                             <div class="progress-fill" style="width: ${progress}%"></div>
@@ -704,6 +736,17 @@ class App {
                     </div>
                 `;
             }).join('');
+
+            const hasMore = yearProjects.length > DASHBOARD_PROJECT_LIMIT;
+            const moreBtn = hasMore ? `
+                <button class="dashboard-more-btn" onclick="app.toggleDashboardProjects()">
+                    ${this.dashboardShowAllProjects
+                        ? '<i class="fas fa-chevron-up"></i> 접기'
+                        : `<i class="fas fa-chevron-down"></i> 더 보기 (${yearProjects.length - DASHBOARD_PROJECT_LIMIT}개 더)`}
+                </button>
+            ` : '';
+
+            progressList.innerHTML = rows + moreBtn;
         }
 
         // TOP 기여자 렌더링
@@ -728,7 +771,7 @@ class App {
                 contributorsList.innerHTML = consolidatedContributors.slice(0, 5).map(member => `
                     <div class="contributor-item consolidated">
                         <div class="contributor-avatar band-${member.band.toLowerCase()}-avatar">
-                            ${member.name.charAt(0)}
+                            ${getMemberInitials(member.name)}
                             <span class="contributor-band band-badge band-badge-${member.band.toLowerCase()} small">${member.band}</span>
                         </div>
                         <div class="contributor-info">
@@ -754,7 +797,7 @@ class App {
                 contributorsList.innerHTML = topContributors.map(member => `
                     <div class="contributor-item">
                         <div class="contributor-avatar band-${member.band.toLowerCase()}-avatar">
-                            ${member.name.charAt(0)}
+                            ${getMemberInitials(member.name)}
                             <span class="contributor-band band-badge band-badge-${member.band.toLowerCase()} small">${member.band}</span>
                         </div>
                         <div class="contributor-info">
@@ -818,8 +861,25 @@ class App {
 
     renderProjects() {
         const projectList = document.getElementById('projectList');
-        const yearProjects = this.store.getProjectsByYear(this.currentYear);
-        
+        // 가중치 내림차순 정렬
+        const yearProjects = this.store.getProjectsByYear(this.currentYear)
+            .slice().sort((a, b) => (b.weight || 5) - (a.weight || 5));
+
+        // 필터 카운트 업데이트
+        const countEl = (id) => document.getElementById(id);
+        if (countEl('projectFilterCountAll')) {
+            countEl('projectFilterCountAll').textContent = yearProjects.length;
+            countEl('projectFilterCountInProgress').textContent = yearProjects.filter(p => p.status === 'in-progress').length;
+            countEl('projectFilterCountCompleted').textContent = yearProjects.filter(p => p.status === 'completed').length;
+            countEl('projectFilterCountPlanning').textContent = yearProjects.filter(p => p.status === 'planning').length;
+            countEl('projectFilterCountOnHold').textContent = yearProjects.filter(p => p.status === 'on-hold').length;
+        }
+
+        // 상태 필터 적용
+        const filtered = this.currentStatusFilter === 'all'
+            ? yearProjects
+            : yearProjects.filter(p => p.status === this.currentStatusFilter);
+
         if (yearProjects.length === 0) {
             projectList.innerHTML = `
                 <div class="empty-state" style="grid-column: 1/-1;">
@@ -831,9 +891,20 @@ class App {
             return;
         }
 
+        if (filtered.length === 0) {
+            projectList.innerHTML = `
+                <div class="empty-state" style="grid-column: 1/-1;">
+                    <i class="fas fa-filter"></i>
+                    <h3>해당 조건의 프로젝트가 없습니다</h3>
+                    <p>다른 필터를 선택해 보세요</p>
+                </div>
+            `;
+            return;
+        }
+
         const currentMonth = new Date().getMonth() + 1;
 
-        projectList.innerHTML = yearProjects.map(project => {
+        projectList.innerHTML = filtered.map(project => {
             const members = this.store.getMembersByProject(project.id);
             const progress = this.store.getProjectProgress(project.id);
             const milestones = this.store.getMilestonesByProject(project.id);
@@ -869,7 +940,7 @@ class App {
             let roadmapPreview = '';
             if (milestones.length > 0) {
                 const previewItems = milestones.slice(0, 3).map(m => {
-                    const monthProgress = m.monthlyProgress[currentMonth] || 0;
+                    const monthProgress = (m.monthlyProgress && m.monthlyProgress[currentMonth]) || 0;
                     return `
                         <div class="roadmap-preview-item">
                             <span class="name">${m.name}</span>
@@ -934,7 +1005,7 @@ class App {
                         </div>
                         <div class="project-members-preview">
                             ${members.slice(0, 4).map(m => `
-                                <div class="member-avatar-small band-${m.band.toLowerCase()}-avatar">${m.name.charAt(0)}</div>
+                                <div class="member-avatar-small band-${m.band.toLowerCase()}-avatar">${getMemberInitials(m.name)}</div>
                             `).join('')}
                             ${members.length > 4 ? `<span class="member-count">+${members.length - 4}</span>` : ''}
                         </div>
@@ -995,7 +1066,7 @@ class App {
                         <span class="band-badge band-badge-${member.band.toLowerCase()}">${member.band}</span>
                         ${member.projects.length > 1 ? `<span class="project-count-badge">${member.projects.length} 프로젝트</span>` : ''}
                     </div>
-                    <div class="member-avatar band-${member.band.toLowerCase()}-avatar">${member.name.charAt(0)}</div>
+                    <div class="member-avatar band-${member.band.toLowerCase()}-avatar">${getMemberInitials(member.name)}</div>
                     <h4>${member.name}</h4>
                     <p class="role">${rolesHtml}</p>
                     <div class="project-tags-container">${projectsHtml}</div>
@@ -1131,7 +1202,7 @@ class App {
 
         let detailHtml = `
             <div class="member-detail-header">
-                <div class="member-avatar-large band-${member.band.toLowerCase()}-avatar">${member.name.charAt(0)}</div>
+                <div class="member-avatar-large band-${member.band.toLowerCase()}-avatar">${getMemberInitials(member.name)}</div>
                 <div class="member-detail-info">
                     <h2>${member.name} <span class="band-badge band-badge-${member.band.toLowerCase()}">${member.band}</span></h2>
                     <p>${member.roles.join(', ') || '역할 없음'}</p>
@@ -1190,9 +1261,6 @@ class App {
                 </div>
             `;
             document.body.appendChild(modal);
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) this.closeMemberDetailModal();
-            });
         }
 
         document.getElementById('memberDetailContent').innerHTML = detailHtml;
@@ -1258,7 +1326,7 @@ class App {
                     <td class="rank-col">${rankDisplay}</td>
                     <td>
                         <div class="eval-member-info">
-                            <div class="member-avatar-small band-${member.band.toLowerCase()}-avatar">${member.name.charAt(0)}</div>
+                            <div class="member-avatar-small band-${member.band.toLowerCase()}-avatar">${getMemberInitials(member.name)}</div>
                             <span>${member.name}</span>
                         </div>
                     </td>
@@ -1281,10 +1349,55 @@ class App {
                     <td><span class="stat-value">${member.avgCollaboration}</span></td>
                     <td><span class="stat-value">${member.avgLeadership}</span></td>
                     <td><span class="stat-value">${member.avgSkill}</span></td>
-                    <td><span class="total-score ${scoreClass}">${member.totalScore}</span></td>
+                    <td>
+                        <button class="total-score-btn ${scoreClass}"
+                                onclick="app.openScoreBreakdown('${member.name}')"
+                                title="계산 과정 보기">
+                            ${member.totalScore}
+                            <i class="fas fa-calculator score-calc-icon"></i>
+                        </button>
+                    </td>
                 </tr>
             `;
         }).join('');
+    }
+
+    openScoreBreakdown(memberName) {
+        const evaluation = this.store.getComprehensiveEvaluation('all', this.currentYear);
+        const member = evaluation.find(m => m.name === memberName);
+        if (!member) return;
+
+        document.getElementById('scoreBreakdownName').textContent = member.name;
+        const bandEl = document.getElementById('scoreBreakdownBand');
+        bandEl.textContent = member.band;
+        bandEl.className = `band-badge band-badge-${member.band.toLowerCase()}`;
+
+        const tbody = document.getElementById('scoreBreakdownTableBody');
+        tbody.innerHTML = (member.projectBreakdown || []).map(p => {
+            const evalScore = p.evalScore !== undefined ? p.evalScore : 100;
+            const isAdjusted = evalScore !== 100;
+            return `
+            <tr>
+                <td class="breakdown-project-name">${p.projectName}</td>
+                <td class="breakdown-center">${p.projectWeight}</td>
+                <td class="breakdown-center">${p.progress}%</td>
+                <td class="breakdown-center">${p.contribution}</td>
+                <td class="breakdown-center">${p.collaboration}</td>
+                <td class="breakdown-center">${p.leadership}</td>
+                <td class="breakdown-center">${p.skill}</td>
+                <td class="breakdown-center breakdown-project-score">${p.projectScore}</td>
+                <td class="breakdown-center breakdown-weighted-score">${p.weightedScore}</td>
+                <td class="breakdown-center breakdown-eval-score ${isAdjusted ? 'eval-adjusted' : ''}">${evalScore}%</td>
+                <td class="breakdown-center breakdown-final-score">${p.finalScore !== undefined ? p.finalScore : p.weightedScore}</td>
+            </tr>`;
+        }).join('');
+
+        document.getElementById('scoreBreakdownTotal').textContent = member.totalScore;
+        document.getElementById('scoreBreakdownModal').classList.add('active');
+    }
+
+    closeScoreBreakdownModal() {
+        document.getElementById('scoreBreakdownModal').classList.remove('active');
     }
 
     // 프로젝트 모달
@@ -1305,11 +1418,13 @@ class App {
             document.getElementById('projectStatus').value = project.status;
             document.getElementById('projectYear').value = project.year || this.currentYear;
             document.getElementById('projectWeight').value = project.weight || 5;
+            document.getElementById('projectEvalScore').value = project.evalScore !== undefined ? project.evalScore : 100;
         } else {
             title.textContent = '새 프로젝트';
             document.getElementById('projectId').value = '';
             document.getElementById('projectYear').value = this.currentYear;
             document.getElementById('projectWeight').value = 5;
+            document.getElementById('projectEvalScore').value = 100;
         }
 
         modal.classList.add('active');
@@ -1329,7 +1444,8 @@ class App {
             deadline: document.getElementById('projectDeadline').value,
             status: document.getElementById('projectStatus').value,
             year: parseInt(document.getElementById('projectYear').value) || this.currentYear,
-            weight: parseInt(document.getElementById('projectWeight').value) || 5
+            weight: parseInt(document.getElementById('projectWeight').value) || 5,
+            evalScore: parseFloat(document.getElementById('projectEvalScore').value) ?? 100
         };
 
         if (id) {
@@ -1521,7 +1637,7 @@ class App {
             <tr>
                 <td>
                     <div style="display: flex; align-items: center; gap: 12px;">
-                        <div class="member-avatar-small band-${member.band.toLowerCase()}-avatar">${member.name.charAt(0)}</div>
+                        <div class="member-avatar-small band-${member.band.toLowerCase()}-avatar">${getMemberInitials(member.name)}</div>
                         <div>
                             <span>${member.name}</span>
                             ${member.notes ? `<div class="table-notes" title="${member.notes}"><i class="fas fa-sticky-note"></i></div>` : ''}
@@ -1664,6 +1780,9 @@ class App {
             document.getElementById('memberSkill').value = 5;
             this.editingMemberId = null;
         }
+
+        // 빠른선택 칩 렌더링 (추가 모드일 때만)
+        this.renderQuickSelectChips(showProjectSelect);
 
         modal.classList.add('active');
     }
@@ -1832,6 +1951,148 @@ class App {
                 alert('마일스톤 삭제에 실패했습니다. 다시 시도해주세요.');
             }
         }
+    }
+
+    // ============================================================
+    //  구성원 리스트 (이름+밴드 풀) 관리 — localStorage 저장
+    // ============================================================
+
+    toggleDashboardProjects() {
+        this.dashboardShowAllProjects = !this.dashboardShowAllProjects;
+        this.renderDashboard();
+    }
+
+    getMemberProfiles() {
+        const raw = localStorage.getItem('memberProfiles');
+        return raw ? JSON.parse(raw) : [];
+    }
+
+    saveMemberProfiles(list) {
+        localStorage.setItem('memberProfiles', JSON.stringify(list));
+    }
+
+    openMemberProfileListModal() {
+        this.renderMemberProfileTable();
+        document.getElementById('memberProfileListModal').classList.add('active');
+        document.getElementById('newProfileName').focus();
+    }
+
+    closeMemberProfileListModal() {
+        document.getElementById('memberProfileListModal').classList.remove('active');
+        document.getElementById('newProfileName').value = '';
+        document.querySelector('input[name="newProfileBand"][value="A"]').checked = true;
+    }
+
+    renderMemberProfileTable() {
+        const profiles = this.getMemberProfiles();
+        const tbody = document.getElementById('memberProfileTableBody');
+        const empty = document.getElementById('memberProfileEmpty');
+
+        if (profiles.length === 0) {
+            tbody.innerHTML = '';
+            empty.style.display = 'block';
+            return;
+        }
+        empty.style.display = 'none';
+        tbody.innerHTML = profiles.map((p, idx) => `
+            <tr>
+                <td class="profile-name-cell">
+                    <span class="profile-name-edit" contenteditable="true"
+                          onblur="app.updateMemberProfileName(${idx}, this.textContent.trim())"
+                          onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}"
+                    >${p.name}</span>
+                </td>
+                <td>
+                    <label class="profile-band-radio-sm">
+                        <input type="radio" name="profileBand_${idx}" value="A" ${p.band === 'A' ? 'checked' : ''}
+                               onchange="app.updateMemberProfileBand(${idx}, 'A')">
+                        <span class="band-badge band-badge-a small">A</span>
+                    </label>
+                    <label class="profile-band-radio-sm">
+                        <input type="radio" name="profileBand_${idx}" value="B" ${p.band === 'B' ? 'checked' : ''}
+                               onchange="app.updateMemberProfileBand(${idx}, 'B')">
+                        <span class="band-badge band-badge-b small">B</span>
+                    </label>
+                </td>
+                <td>
+                    <button class="icon-btn danger-btn" onclick="app.deleteMemberProfile(${idx})" title="삭제">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    addMemberProfile() {
+        const nameInput = document.getElementById('newProfileName');
+        const name = nameInput.value.trim();
+        if (!name) { nameInput.focus(); return; }
+
+        const band = document.querySelector('input[name="newProfileBand"]:checked').value;
+        const profiles = this.getMemberProfiles();
+
+        if (profiles.some(p => p.name === name)) {
+            alert(`'${name}'은(는) 이미 리스트에 있습니다.`);
+            return;
+        }
+
+        profiles.push({ name, band });
+        this.saveMemberProfiles(profiles);
+        nameInput.value = '';
+        nameInput.focus();
+        this.renderMemberProfileTable();
+    }
+
+    deleteMemberProfile(idx) {
+        const profiles = this.getMemberProfiles();
+        profiles.splice(idx, 1);
+        this.saveMemberProfiles(profiles);
+        this.renderMemberProfileTable();
+    }
+
+    updateMemberProfileName(idx, newName) {
+        if (!newName) return;
+        const profiles = this.getMemberProfiles();
+        profiles[idx].name = newName;
+        this.saveMemberProfiles(profiles);
+    }
+
+    updateMemberProfileBand(idx, band) {
+        const profiles = this.getMemberProfiles();
+        profiles[idx].band = band;
+        this.saveMemberProfiles(profiles);
+    }
+
+    // 구성원 추가 모달에 빠른선택 칩 렌더링
+    renderQuickSelectChips(showProjectSelect) {
+        const section = document.getElementById('memberQuickSelect');
+        const chipsEl = document.getElementById('quickSelectChips');
+        const profiles = this.getMemberProfiles();
+
+        // 편집 모드이거나 프로필 없으면 숨김
+        if (showProjectSelect === undefined) showProjectSelect = false;
+        const isEditMode = !!document.getElementById('memberId').value;
+        if (isEditMode || profiles.length === 0) {
+            section.style.display = 'none';
+            return;
+        }
+
+        section.style.display = 'block';
+        chipsEl.innerHTML = profiles.map(p => `
+            <button type="button" class="quick-chip band-${p.band.toLowerCase()}-chip"
+                    onclick="app.applyQuickSelect('${p.name}', '${p.band}')">
+                ${p.name}
+                <span class="chip-band">${p.band}</span>
+            </button>
+        `).join('');
+    }
+
+    applyQuickSelect(name, band) {
+        document.getElementById('memberName').value = name;
+        document.querySelector(`input[name="memberBand"][value="${band}"]`).checked = true;
+        // 선택된 칩 하이라이트
+        document.querySelectorAll('.quick-chip').forEach(c => c.classList.remove('selected'));
+        event.currentTarget.classList.add('selected');
     }
 }
 

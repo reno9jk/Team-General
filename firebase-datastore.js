@@ -17,12 +17,22 @@ class FirebaseDataStore {
     }
 
     async init() {
+        // file:// 직접 열기 또는 Firebase SDK 미로드 시 즉시 데모 모드
+        const isFileProtocol = window.location.protocol === 'file:';
+        const isFirebaseMissing = typeof firebase === 'undefined' || typeof getFirebaseServices === 'undefined' || window.__firebaseLoadFailed;
+
+        if (isFileProtocol || isFirebaseMissing) {
+            console.warn('데모 모드 진입 (사유: ' + (isFileProtocol ? 'file:// 직접 열기' : 'Firebase SDK 미로드') + ')');
+            this.enterDemoMode();
+            return;
+        }
+
         try {
             // Firebase 서비스 가져오기
             const services = getFirebaseServices();
             if (!services) {
-                console.warn('Firebase를 사용할 수 없습니다. LocalStorage로 폴백합니다.');
-                this.initialized = false;
+                console.warn('Firebase를 사용할 수 없습니다. 데모 모드로 진입합니다.');
+                this.enterDemoMode();
                 return;
             }
 
@@ -47,8 +57,8 @@ class FirebaseDataStore {
                         this.onDataChanged();
                     }
                 } else {
-                    // 로그인되지 않은 경우 - 로그인 화면 표시
-                    this.showLoginModal();
+                    // 로그인되지 않은 경우 - 데모 모드로 진입
+                    this.enterDemoMode();
                 }
             });
 
@@ -59,7 +69,73 @@ class FirebaseDataStore {
         } catch (error) {
             console.error('Firebase 초기화 실패:', error);
             this.initialized = false;
+            // Firebase 연결 실패 시에도 데모 모드로 폴백
+            this.enterDemoMode();
         }
+    }
+
+    enterDemoMode() {
+        // 더미 데이터 로드
+        this.isDemoMode = true;
+        this.projects = typeof DEMO_PROJECTS !== 'undefined' ? JSON.parse(JSON.stringify(DEMO_PROJECTS)) : [];
+        this.members = typeof DEMO_MEMBERS !== 'undefined' ? JSON.parse(JSON.stringify(DEMO_MEMBERS)) : [];
+        this.milestones = typeof DEMO_MILESTONES !== 'undefined' ? JSON.parse(JSON.stringify(DEMO_MILESTONES)) : [];
+        this.initialized = true;
+
+        // 데모 배너 표시
+        this.showDemoBanner();
+
+        // 앱 렌더링 — onDataChanged는 App 생성자에서 할당되므로 한 틱 뒤에 호출
+        setTimeout(() => {
+            if (this.onDataChanged) {
+                this.onDataChanged();
+            }
+        }, 0);
+    }
+
+    showDemoBanner() {
+        if (document.getElementById('demoBanner')) return;
+        const banner = document.createElement('div');
+        banner.id = 'demoBanner';
+        banner.className = 'demo-banner';
+        const isFile = window.location.protocol === 'file:';
+        const bannerMsg = isFile
+            ? '데모 모드 — 파일을 직접 열었습니다. 실제 데이터를 사용하려면 로컬 서버 또는 배포 URL로 접속 후 로그인하세요.'
+            : '데모 모드 — 샘플 데이터로 시연 중입니다. 실제 데이터는 로그인 후 확인하세요.';
+        banner.innerHTML = `
+            <span class="demo-banner-icon">📋</span>
+            <span class="demo-banner-text">${bannerMsg}</span>
+            ${!isFile ? `<button class="demo-banner-login-btn" onclick="app && app.store && app.store.showLoginModal()">로그인하기</button>` : ''}
+        `;
+        // 앱 컨테이너 앞에 삽입
+        const appContainer = document.querySelector('.app-container');
+        if (appContainer) {
+            document.body.insertBefore(banner, appContainer);
+        } else {
+            document.body.prepend(banner);
+        }
+    }
+
+    // 데모 모드에서 저장/수정/삭제 차단
+    _demoGuard() {
+        if (this.isDemoMode) {
+            this._showDemoNotice();
+            return true;
+        }
+        return false;
+    }
+
+    _showDemoNotice() {
+        let toast = document.getElementById('demoToast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'demoToast';
+            toast.className = 'demo-toast';
+            document.body.appendChild(toast);
+        }
+        toast.textContent = '🔒 데모 모드에서는 데이터를 저장할 수 없습니다. 로그인 후 이용해 주세요.';
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
     }
 
     showLoginModal() {
@@ -215,8 +291,9 @@ class FirebaseDataStore {
             errorDiv.style.display = 'none';
 
             // 허용된 이메일인지 확인
-            if (typeof AUTH_CONFIG !== 'undefined' && AUTH_CONFIG.allowedEmail) {
-                if (email.toLowerCase() !== AUTH_CONFIG.allowedEmail.toLowerCase()) {
+            if (typeof isAllowedUser === 'function') {
+                const mockUser = { email };
+                if (!isAllowedUser(mockUser)) {
                     errorDiv.textContent = '허용되지 않은 이메일 주소입니다.';
                     errorDiv.style.display = 'block';
                     return;
@@ -353,6 +430,7 @@ class FirebaseDataStore {
 
     // 프로젝트 CRUD
     async addProject(project) {
+        if (this._demoGuard()) return null;
         project.id = Date.now().toString();
         project.createdAt = new Date().toISOString();
         
@@ -373,6 +451,7 @@ class FirebaseDataStore {
     }
 
     async updateProject(id, updates) {
+        if (this._demoGuard()) return null;
         const index = this.projects.findIndex(p => p.id === id);
         if (index === -1) return null;
 
@@ -394,6 +473,7 @@ class FirebaseDataStore {
     }
 
     async deleteProject(id) {
+        if (this._demoGuard()) return;
         if (this.initialized && this.db && this.userId) {
             try {
                 const batch = this.db.batch();
@@ -435,6 +515,7 @@ class FirebaseDataStore {
 
     // 구성원 CRUD
     async addMember(member) {
+        if (this._demoGuard()) return null;
         member.id = Date.now().toString();
         if (!member.band) {
             member.band = 'A';
@@ -456,6 +537,7 @@ class FirebaseDataStore {
     }
 
     async updateMember(id, updates) {
+        if (this._demoGuard()) return null;
         const index = this.members.findIndex(m => m.id === id);
         if (index === -1) return null;
 
@@ -477,6 +559,7 @@ class FirebaseDataStore {
     }
 
     async deleteMember(id) {
+        if (this._demoGuard()) return;
         if (this.initialized && this.db && this.userId) {
             try {
                 await this.getCollectionPath('members').doc(id).delete();
@@ -545,7 +628,7 @@ class FirebaseDataStore {
         const totalProjects = projects.length;
         const completedProjects = projects.filter(p => p.status === 'completed').length;
         const inProgressProjects = projects.filter(p => p.status === 'in-progress').length;
-        const totalMembers = members.length;
+        const totalMembers = new Set(members.map(m => m.name)).size; // 이름 기준 중복 제거
         
         return { totalProjects, completedProjects, inProgressProjects, totalMembers };
     }
@@ -575,6 +658,7 @@ class FirebaseDataStore {
 
     // 마일스톤 CRUD
     async addMilestone(milestone) {
+        if (this._demoGuard()) return null;
         milestone.id = Date.now().toString();
         milestone.createdAt = new Date().toISOString();
         
@@ -594,6 +678,7 @@ class FirebaseDataStore {
     }
 
     async updateMilestone(id, updates) {
+        if (this._demoGuard()) return null;
         const index = this.milestones.findIndex(m => m.id === id);
         if (index === -1) return null;
 
@@ -615,6 +700,7 @@ class FirebaseDataStore {
     }
 
     async deleteMilestone(id) {
+        if (this._demoGuard()) return;
         if (this.initialized && this.db && this.userId) {
             try {
                 await this.getCollectionPath('milestones').doc(id).delete();
@@ -674,9 +760,10 @@ class FirebaseDataStore {
     }
 
     // 종합평가 (기존과 동일 - 로직 변경 없음)
+    // 종합평가 - 구성원별 전체 프로젝트 성과 집계 (프로젝트별 합산, 연도별 필터링)
     getComprehensiveEvaluation(band = 'all', year = null) {
         let membersToEvaluate = year ? this.getMembersByYear(year) : this.members;
-        
+
         const memberMap = new Map();
 
         membersToEvaluate.forEach(member => {
@@ -690,68 +777,73 @@ class FirebaseDataStore {
                     band: member.band,
                     projects: [],
                     roles: [],
+                    projectBreakdown: [],
                     weightedProgressSum: 0,
                     weightedContributionSum: 0,
                     weightedCollaborationSum: 0,
                     weightedLeadershipSum: 0,
                     weightedSkillSum: 0,
-                    totalWeight: 0
+                    totalWeight: 0,
+                    totalScore: 0
                 });
             }
 
             const data = memberMap.get(member.name);
-            if (!data.projects.includes(projectName)) {
-                data.projects.push(projectName);
-            }
-            if (member.role && !data.roles.includes(member.role)) {
-                data.roles.push(member.role);
-            }
-            data.weightedProgressSum += (member.progress || 0) * projectWeight;
-            data.weightedContributionSum += (member.contribution || 0) * projectWeight;
-            data.weightedCollaborationSum += (member.collaboration || 5) * projectWeight;
-            data.weightedLeadershipSum += (member.leadership || 5) * projectWeight;
-            data.weightedSkillSum += (member.skill || 5) * projectWeight;
-            data.totalWeight += projectWeight;
+            if (!data.projects.includes(projectName)) data.projects.push(projectName);
+            if (member.role && !data.roles.includes(member.role)) data.roles.push(member.role);
+
+            const progress      = member.progress     || 0;
+            const contribution  = member.contribution  || 0;
+            const collaboration = member.collaboration || 5;
+            const leadership    = member.leadership    || 5;
+            const skill         = member.skill         || 5;
+            const evalScore     = project ? (project.evalScore !== undefined ? project.evalScore : 100) : 100;
+
+            const projectScore = parseFloat((
+                (progress * 0.25) +
+                (contribution * 2) +
+                (collaboration * 1.5) +
+                (leadership * 1.5) +
+                (skill * 2)
+            ).toFixed(1));
+
+            // 1차 결과: 가중치 반영
+            const weightedScore = parseFloat((projectScore * projectWeight / 10).toFixed(1));
+
+            // 최종 결과: 프로젝트 최종 평가(%) 적용
+            const finalScore = parseFloat((weightedScore * evalScore / 100).toFixed(1));
+
+            data.projectBreakdown.push({ projectName, projectWeight, evalScore, progress, contribution, collaboration, leadership, skill, projectScore, weightedScore, finalScore });
+
+            data.weightedProgressSum      += progress      * projectWeight;
+            data.weightedContributionSum  += contribution  * projectWeight;
+            data.weightedCollaborationSum += collaboration * projectWeight;
+            data.weightedLeadershipSum    += leadership    * projectWeight;
+            data.weightedSkillSum         += skill         * projectWeight;
+            data.totalWeight              += projectWeight;
+            data.totalScore               += finalScore;
         });
 
         let results = Array.from(memberMap.values()).map(data => {
-            const avgProgress = data.totalWeight > 0 ? Math.round(data.weightedProgressSum / data.totalWeight) : 0;
-            const avgContribution = data.totalWeight > 0 ? (data.weightedContributionSum / data.totalWeight).toFixed(1) : 0;
-            const avgCollaboration = data.totalWeight > 0 ? (data.weightedCollaborationSum / data.totalWeight).toFixed(1) : 0;
-            const avgLeadership = data.totalWeight > 0 ? (data.weightedLeadershipSum / data.totalWeight).toFixed(1) : 0;
-            const avgSkill = data.totalWeight > 0 ? (data.weightedSkillSum / data.totalWeight).toFixed(1) : 0;
-
-            const totalScore = (
-                (avgProgress * 0.25) +
-                (parseFloat(avgContribution) * 2) +
-                (parseFloat(avgCollaboration) * 1.5) +
-                (parseFloat(avgLeadership) * 1.5) +
-                (parseFloat(avgSkill) * 2)
-            ).toFixed(1);
-
+            const w = data.totalWeight;
             return {
                 name: data.name,
                 band: data.band,
                 projects: data.projects,
                 roles: data.roles,
-                avgProgress,
-                avgContribution: parseFloat(avgContribution),
-                avgCollaboration: parseFloat(avgCollaboration),
-                avgLeadership: parseFloat(avgLeadership),
-                avgSkill: parseFloat(avgSkill),
-                totalScore: parseFloat(totalScore)
+                projectBreakdown: data.projectBreakdown,
+                avgProgress:      w > 0 ? Math.round(data.weightedProgressSum / w) : 0,
+                avgContribution:  w > 0 ? parseFloat((data.weightedContributionSum / w).toFixed(1)) : 0,
+                avgCollaboration: w > 0 ? parseFloat((data.weightedCollaborationSum / w).toFixed(1)) : 0,
+                avgLeadership:    w > 0 ? parseFloat((data.weightedLeadershipSum / w).toFixed(1)) : 0,
+                avgSkill:         w > 0 ? parseFloat((data.weightedSkillSum / w).toFixed(1)) : 0,
+                totalScore:       parseFloat(data.totalScore.toFixed(1))
             };
         });
 
-        if (band !== 'all') {
-            results = results.filter(r => r.band === band);
-        }
-
+        if (band !== 'all') results = results.filter(r => r.band === band);
         results.sort((a, b) => b.totalScore - a.totalScore);
-
-        results.forEach((r, index) => {
-            r.rank = index + 1;
-        });
+        results.forEach((r, i) => { r.rank = i + 1; });
 
         return results;
     }
@@ -774,14 +866,8 @@ class FirebaseDataStore {
 
     // LocalStorage에서 데이터 마이그레이션
     async migrateFromLocalStorage() {
-        // Firebase 초기화 및 사용자 인증 완료 대기
-        if (!this.db || !this.userId) {
-            // 아직 초기화되지 않았으면 조용히 실패 (오류 로그 제거)
-            return false;
-        }
-        
-        // 이미 마이그레이션된 경우 건너뛰기
-        if (localStorage.getItem('firebase_migrated') === 'true') {
+        if (!this.initialized || !this.db || !this.userId) {
+            console.warn('Firebase가 초기화되지 않아 마이그레이션을 수행할 수 없습니다.');
             return false;
         }
 

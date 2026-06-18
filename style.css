@@ -1,26 +1,60 @@
-/* 기본 스타일 리셋 및 변수 */
+/* Notion-inspired design system (notion.com / brand guidelines) */
 :root {
-    --primary: #6366f1;
-    --primary-dark: #4f46e5;
-    --secondary: #64748b;
-    --success: #22c55e;
-    --warning: #f59e0b;
-    --danger: #ef4444;
-    --info: #3b82f6;
-    --purple: #a855f7;
-    --band-a: #f59e0b;
-    --band-a-bg: rgba(245, 158, 11, 0.15);
-    --band-b: #3b82f6;
-    --band-b-bg: rgba(59, 130, 246, 0.15);
-    --bg-dark: #0f172a;
-    --bg-card: #1e293b;
-    --bg-light: #334155;
-    --text-primary: #f1f5f9;
-    --text-secondary: #94a3b8;
-    --border-color: #475569;
-    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
-    --radius: 12px;
-    --transition: all 0.3s ease;
+    --notion-text: #191711;
+    --notion-text-secondary: #454340;
+    --notion-text-tertiary: #787774;
+    --notion-bg: #ffffff;
+    --notion-bg-sidebar: #f7f6f3;
+    --notion-bg-hover: rgba(55, 53, 47, 0.08);
+    --notion-bg-active: rgba(55, 53, 47, 0.14);
+    --notion-border: rgba(55, 53, 47, 0.12);
+    --notion-blue: #2383e2;
+    --notion-blue-hover: #1a73c7;
+    --notion-blue-bg: rgba(35, 131, 226, 0.12);
+
+    --tag-gray-bg: #e3e2e0;
+    --tag-gray-text: #32302c;
+    --tag-orange-bg: #fadec9;
+    --tag-orange-text: #733000;
+    --tag-blue-bg: #d3e5ef;
+    --tag-blue-text: #183347;
+    --tag-green-bg: #dbeddb;
+    --tag-green-text: #1c3829;
+    --tag-yellow-bg: #fdecc8;
+    --tag-yellow-text: #402c1b;
+    --tag-red-bg: #fbe4e4;
+    --tag-red-text: #5c1111;
+    --tag-purple-bg: #e8deee;
+    --tag-purple-text: #412454;
+    --tag-pink-bg: #f5e0e9;
+    --tag-pink-text: #522046;
+
+    --primary: #2383e2;
+    --primary-dark: #1a73c7;
+    --secondary: #454340;
+    --success: #0f7b6c;
+    --warning: #9c4a00;
+    --danger: #c0392b;
+    --info: #2383e2;
+    --purple: #6940a5;
+    --band-a: #9c4a00;
+    --band-a-bg: #fadec9;
+    --band-b: #183347;
+    --band-b-bg: #d3e5ef;
+    --bg-dark: #f7f6f3;
+    --bg-card: #ffffff;
+    --bg-light: #f1f1ef;
+    --text-primary: #191711;
+    --text-secondary: #454340;
+    --text-tertiary: #787774;
+    --border-color: rgba(55, 53, 47, 0.12);
+    --shadow: 0 1px 3px rgba(15, 15, 15, 0.06);
+    --shadow-lg: 0 4px 16px rgba(15, 15, 15, 0.08);
+    --radius: 6px;
+    --radius-lg: 8px;
+    --transition: all 0.15s ease-in-out;
+    --font-display: "Inter", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --font-text: "Inter", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 * {
@@ -30,10 +64,15 @@
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: var(--font-text);
     background: var(--bg-dark);
     color: var(--text-primary);
     min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    letter-spacing: 0;
+    line-height: 1.5;
+    font-size: 15px;
 }
 
 /* 앱 컨테이너 */
@@ -45,8 +84,8 @@ body {
 /* 사이드바 */
 .sidebar {
     width: 260px;
-    background: var(--bg-card);
-    padding: 24px;
+    background: var(--notion-bg-sidebar);
+    padding: 16px 12px;
     display: flex;
     flex-direction: column;
     border-right: 1px solid var(--border-color);
@@ -61,27 +100,26 @@ body {
 }
 
 .logo i {
-    font-size: 28px;
-    color: var(--primary);
+    font-size: 22px;
+    color: var(--notion-text);
 }
 
 .logo h1 {
-    font-size: 22px;
-    font-weight: 700;
-    background: linear-gradient(135deg, var(--primary), var(--purple));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--notion-text);
+    letter-spacing: -0.01em;
     white-space: nowrap;
 }
 
 /* 연도 선택기 */
 .year-selector {
-    margin-bottom: 24px;
-    padding: 16px;
-    background: linear-gradient(135deg, var(--bg-light), var(--bg-dark));
+    margin-bottom: 16px;
+    padding: 12px;
+    background: var(--notion-bg);
     border-radius: var(--radius);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-color);
 }
 
 .year-selector label {
@@ -89,42 +127,42 @@ body {
     align-items: center;
     gap: 8px;
     font-size: 12px;
-    font-weight: 500;
+    font-weight: 600;
     color: var(--text-secondary);
     margin-bottom: 8px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    text-transform: none;
+    letter-spacing: 0;
 }
 
 .year-selector label i {
-    color: var(--primary);
+    color: var(--text-tertiary);
 }
 
 .year-selector select {
     width: 100%;
     padding: 12px 16px;
     background: var(--bg-card);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-color);
     border-radius: var(--radius);
     color: var(--text-primary);
-    font-size: 16px;
-    font-weight: 600;
+    font-size: 15px;
+    font-weight: 500;
     cursor: pointer;
     transition: var(--transition);
     appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%239ca3af' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%236e6e73' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 12px center;
 }
 
 .year-selector select:hover {
-    border-color: var(--primary);
+    border-color: var(--apple-text-tertiary);
 }
 
 .year-selector select:focus {
     outline: none;
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    box-shadow: 0 0 0 2px var(--notion-blue-bg);
 }
 
 .year-selector select option {
@@ -142,26 +180,28 @@ body {
 .nav-btn {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 14px 16px;
+    gap: 10px;
+    padding: 8px 10px;
     background: transparent;
     border: none;
     border-radius: var(--radius);
     color: var(--text-secondary);
-    font-size: 15px;
+    font-size: 14px;
+    font-weight: 500;
     cursor: pointer;
     transition: var(--transition);
 }
 
 .nav-btn:hover {
-    background: var(--bg-light);
+    background: var(--notion-bg-hover);
     color: var(--text-primary);
 }
 
 .nav-btn.active {
-    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-    color: white;
-    box-shadow: var(--shadow);
+    background: var(--notion-bg-active);
+    color: var(--notion-text);
+    font-weight: 600;
+    box-shadow: none;
 }
 
 .nav-btn i {
@@ -185,41 +225,47 @@ body {
 }
 
 .page-title {
+    font-family: var(--font-display);
     font-size: 28px;
     font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--notion-text);
+    line-height: 1.2;
 }
 
 /* 버튼 */
 .btn {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 12px 20px;
+    gap: 6px;
+    padding: 8px 14px;
     border: none;
     border-radius: var(--radius);
     font-size: 14px;
-    font-weight: 600;
+    font-weight: 500;
     cursor: pointer;
     transition: var(--transition);
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-    color: white;
+    background: var(--notion-text);
+    color: #ffffff;
 }
 
 .btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 16px rgba(99, 102, 241, 0.3);
+    background: #000000;
+    transform: none;
+    box-shadow: none;
 }
 
 .btn-secondary {
-    background: var(--bg-light);
+    background: var(--notion-bg);
     color: var(--text-primary);
+    border: 1px solid var(--border-color);
 }
 
 .btn-secondary:hover {
-    background: var(--border-color);
+    background: var(--notion-bg-hover);
 }
 
 .btn-danger {
@@ -247,57 +293,60 @@ body {
 .stat-card {
     background: var(--bg-card);
     padding: 24px;
-    border-radius: var(--radius);
+    border-radius: var(--radius-lg);
     display: flex;
     align-items: center;
     gap: 20px;
     border: 1px solid var(--border-color);
+    box-shadow: var(--shadow);
     transition: var(--transition);
 }
 
 .stat-card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow);
+    transform: none;
+    box-shadow: var(--shadow-lg);
 }
 
 .stat-icon {
-    width: 56px;
-    height: 56px;
-    border-radius: 14px;
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
+    font-size: 20px;
 }
 
 .stat-icon.blue {
-    background: rgba(59, 130, 246, 0.2);
-    color: var(--info);
+    background: var(--tag-blue-bg);
+    color: var(--tag-blue-text);
 }
 
 .stat-icon.green {
-    background: rgba(34, 197, 94, 0.2);
-    color: var(--success);
+    background: var(--tag-green-bg);
+    color: var(--tag-green-text);
 }
 
 .stat-icon.orange {
-    background: rgba(245, 158, 11, 0.2);
-    color: var(--warning);
+    background: var(--tag-orange-bg);
+    color: var(--tag-orange-text);
 }
 
 .stat-icon.purple {
-    background: rgba(168, 85, 247, 0.2);
-    color: var(--purple);
+    background: var(--tag-purple-bg);
+    color: var(--tag-purple-text);
 }
 
 .stat-info h3 {
-    font-size: 32px;
+    font-size: 28px;
     font-weight: 700;
+    color: var(--notion-text);
 }
 
 .stat-info p {
     color: var(--text-secondary);
-    font-size: 14px;
+    font-size: 13px;
+    font-weight: 500;
     margin-top: 4px;
 }
 
@@ -311,23 +360,24 @@ body {
 
 .band-stat-card {
     background: var(--bg-card);
-    border-radius: var(--radius);
+    border-radius: var(--radius-lg);
     border: 1px solid var(--border-color);
+    box-shadow: var(--shadow);
     overflow: hidden;
     transition: var(--transition);
 }
 
 .band-stat-card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow);
+    transform: none;
+    box-shadow: var(--shadow-lg);
 }
 
 .band-stat-card.band-a {
-    border-top: 3px solid var(--band-a);
+    border-top: 3px solid var(--tag-orange-text);
 }
 
 .band-stat-card.band-b {
-    border-top: 3px solid var(--band-b);
+    border-top: 3px solid var(--tag-blue-text);
 }
 
 .band-stat-header {
@@ -357,12 +407,13 @@ body {
     display: block;
     font-size: 24px;
     font-weight: 700;
-    color: var(--text-primary);
+    color: var(--notion-text);
 }
 
 .band-stat-label {
     display: block;
     font-size: 12px;
+    font-weight: 500;
     color: var(--text-secondary);
     margin-top: 4px;
 }
@@ -373,35 +424,35 @@ body {
     align-items: center;
     justify-content: center;
     width: 28px;
-    height: 28px;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 700;
+    height: 22px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
 }
 
 .band-badge.small {
     width: 22px;
-    height: 22px;
-    font-size: 12px;
-    border-radius: 6px;
+    height: 18px;
+    font-size: 11px;
+    border-radius: 3px;
 }
 
 .band-badge-a {
-    background: linear-gradient(135deg, #fbbf24, #f59e0b);
-    color: #1a1a2e;
-    border: 2px solid #fff;
-    font-weight: 700;
+    background: var(--tag-orange-bg);
+    color: var(--tag-orange-text);
+    border: none;
+    font-weight: 600;
     text-shadow: none;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    box-shadow: none;
 }
 
 .band-badge-b {
-    background: linear-gradient(135deg, #60a5fa, #3b82f6);
-    color: #fff;
-    border: 2px solid #fff;
-    font-weight: 700;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    background: var(--tag-blue-bg);
+    color: var(--tag-blue-text);
+    border: none;
+    font-weight: 600;
+    text-shadow: none;
+    box-shadow: none;
 }
 
 /* 대시보드 그리드 */
@@ -453,17 +504,18 @@ body {
 .view-toggle {
     display: flex;
     gap: 2px;
-    background: var(--bg-dark);
-    padding: 3px;
-    border-radius: 6px;
+    background: var(--bg-light);
+    padding: 2px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border-color);
 }
 
 .toggle-btn {
-    padding: 4px 10px;
+    padding: 5px 12px;
     border: none;
     background: transparent;
     color: var(--text-secondary);
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 500;
     border-radius: 4px;
     cursor: pointer;
@@ -472,11 +524,14 @@ body {
 
 .toggle-btn:hover {
     color: var(--text-primary);
+    background: var(--notion-bg-hover);
 }
 
 .toggle-btn.active {
-    background: var(--primary);
-    color: white;
+    background: var(--notion-bg);
+    color: var(--notion-text);
+    font-weight: 600;
+    box-shadow: var(--shadow);
 }
 
 /* 탭 버튼 */
@@ -590,8 +645,9 @@ body {
 }
 
 .mini-tab.active {
-    background: var(--primary);
-    color: white;
+    background: var(--notion-bg-active);
+    color: var(--notion-text);
+    font-weight: 600;
 }
 
 /* 진행률 리스트 */
@@ -631,7 +687,7 @@ body {
 
 .progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, var(--primary), var(--purple));
+    background: var(--notion-blue);
     border-radius: 4px;
     transition: width 0.5s ease;
 }
@@ -669,21 +725,25 @@ body {
     width: 44px;
     height: 44px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--primary), var(--purple));
+    background: var(--tag-purple-bg);
+    color: var(--tag-purple-text);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: 700;
-    font-size: 16px;
+    font-weight: 600;
+    font-size: 13px;
     position: relative;
+    letter-spacing: -0.02em;
 }
 
 .contributor-avatar.band-a-avatar {
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    background: var(--tag-orange-bg);
+    color: var(--tag-orange-text);
 }
 
 .contributor-avatar.band-b-avatar {
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    background: var(--tag-blue-bg);
+    color: var(--tag-blue-text);
 }
 
 .contributor-band {
@@ -747,63 +807,58 @@ body {
 
 .project-card {
     background: var(--bg-card);
-    border-radius: var(--radius);
+    border-radius: var(--radius-lg);
     border: 1px solid var(--border-color);
+    box-shadow: var(--shadow);
     overflow: hidden;
     transition: var(--transition);
     cursor: pointer;
 }
 
 .project-card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow);
-    border-color: var(--primary);
-}
-
-.project-card-header {
-    padding: 20px 24px;
-    border-bottom: 1px solid var(--border-color);
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
+    transform: none;
+    box-shadow: var(--shadow-lg);
+    border-color: var(--border-color);
 }
 
 .project-card-header h3 {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 600;
+    color: var(--notion-text);
     margin-bottom: 4px;
 }
 
 .project-card-header p {
     color: var(--text-secondary);
     font-size: 13px;
+    font-weight: 500;
 }
 
 .project-status {
-    padding: 6px 12px;
-    border-radius: 20px;
+    padding: 2px 8px;
+    border-radius: 4px;
     font-size: 12px;
     font-weight: 600;
 }
 
 .status-planning {
-    background: rgba(100, 116, 139, 0.2);
-    color: var(--secondary);
+    background: var(--tag-gray-bg);
+    color: var(--tag-gray-text);
 }
 
 .status-in-progress {
-    background: rgba(245, 158, 11, 0.2);
-    color: var(--warning);
+    background: var(--tag-yellow-bg);
+    color: var(--tag-yellow-text);
 }
 
 .status-completed {
-    background: rgba(34, 197, 94, 0.2);
-    color: var(--success);
+    background: var(--tag-green-bg);
+    color: var(--tag-green-text);
 }
 
 .status-on-hold {
-    background: rgba(239, 68, 68, 0.2);
-    color: var(--danger);
+    background: var(--tag-red-bg);
+    color: var(--tag-red-text);
 }
 
 .project-card-body {
@@ -849,14 +904,16 @@ body {
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--primary), var(--purple));
+    background: var(--tag-purple-bg);
+    color: var(--tag-purple-text);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 12px;
+    font-size: 10px;
     font-weight: 600;
     border: 2px solid var(--bg-card);
     margin-left: -8px;
+    letter-spacing: -0.02em;
 }
 
 .member-avatar-small:first-child {
@@ -864,11 +921,13 @@ body {
 }
 
 .member-avatar-small.band-a-avatar {
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    background: var(--tag-orange-bg);
+    color: var(--tag-orange-text);
 }
 
 .member-avatar-small.band-b-avatar {
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    background: var(--tag-blue-bg);
+    color: var(--tag-blue-text);
 }
 
 .member-count {
@@ -911,28 +970,32 @@ body {
 .member-card-band {
     position: absolute;
     top: 16px;
-    right: 16px;
+    left: 16px;
 }
 
 .member-avatar {
     width: 80px;
     height: 80px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--primary), var(--purple));
+    background: var(--tag-purple-bg);
+    color: var(--tag-purple-text);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 28px;
-    font-weight: 700;
+    font-size: 22px;
+    font-weight: 600;
     margin: 0 auto 16px;
+    letter-spacing: -0.03em;
 }
 
 .member-avatar.band-a-avatar {
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    background: var(--tag-orange-bg);
+    color: var(--tag-orange-text);
 }
 
 .member-avatar.band-b-avatar {
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    background: var(--tag-blue-bg);
+    color: var(--tag-blue-text);
 }
 
 .member-card h4 {
@@ -1039,8 +1102,9 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(4px);
+    background: rgba(0, 0, 0, 0.48);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     z-index: 1000;
     align-items: center;
     justify-content: center;
@@ -1059,12 +1123,13 @@ body {
 
 .modal-content {
     background: var(--bg-card);
-    border-radius: var(--radius);
+    border-radius: var(--radius-lg);
     width: 100%;
     max-width: 500px;
     max-height: 90vh;
     overflow-y: auto;
-    border: 1px solid var(--border-color);
+    border: none;
+    box-shadow: var(--shadow-lg);
 }
 
 .modal-large {
@@ -1080,20 +1145,30 @@ body {
 }
 
 .modal-header h3 {
-    font-size: 20px;
+    font-family: var(--font-display);
+    font-size: 22px;
     font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--apple-black);
 }
 
 .close-btn {
-    background: transparent;
+    background: var(--apple-gray-secondary);
     border: none;
     color: var(--text-secondary);
-    font-size: 20px;
+    font-size: 16px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
     cursor: pointer;
     transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .close-btn:hover {
+    background: var(--apple-gray-border);
     color: var(--text-primary);
 }
 
@@ -1132,11 +1207,12 @@ form {
 .form-group select {
     width: 100%;
     padding: 12px 16px;
-    background: var(--bg-dark);
+    background: var(--bg-card);
     border: 1px solid var(--border-color);
-    border-radius: 8px;
+    border-radius: var(--radius);
     color: var(--text-primary);
     font-size: 15px;
+    font-family: var(--font-text);
     transition: var(--transition);
 }
 
@@ -1145,7 +1221,7 @@ form {
 .form-group select:focus {
     outline: none;
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.15);
 }
 
 .form-group input[type="range"] {
@@ -1537,11 +1613,11 @@ form {
 }
 
 .milestone-progress-badge {
-    background: var(--primary);
-    color: white;
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 13px;
+    background: var(--tag-blue-bg);
+    color: var(--tag-blue-text);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
     font-weight: 600;
 }
 
@@ -1570,20 +1646,23 @@ form {
 .month-bar-fill {
     width: 100%;
     max-width: 30px;
-    background: linear-gradient(180deg, var(--primary), var(--purple));
-    border-radius: 4px 4px 0 0;
+    background: var(--notion-blue);
+    border-radius: 3px 3px 0 0;
     min-height: 4px;
     transition: height 0.3s ease;
+    opacity: 0.85;
 }
 
 .month-bar-label {
     font-size: 10px;
+    font-weight: 500;
     color: var(--text-secondary);
 }
 
 .month-bar-value {
     font-size: 9px;
-    color: var(--text-secondary);
+    font-weight: 600;
+    color: var(--text-primary);
     position: absolute;
     top: -16px;
 }
@@ -2102,15 +2181,21 @@ form {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 32px;
+    font-size: 24px;
     font-weight: 600;
-    color: white;
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    background: var(--tag-purple-bg);
+    color: var(--tag-purple-text);
+    letter-spacing: -0.03em;
 }
 
-.member-avatar-large.band-a-avatar,
+.member-avatar-large.band-a-avatar {
+    background: var(--tag-orange-bg);
+    color: var(--tag-orange-text);
+}
+
 .member-avatar-large.band-b-avatar {
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    background: var(--tag-blue-bg);
+    color: var(--tag-blue-text);
 }
 
 .member-detail-info {
@@ -2269,26 +2354,26 @@ form {
 
 /* 가중치 1-3 (낮음) */
 .weight-1, .weight-2, .weight-3 {
-    background: rgba(156, 163, 175, 0.2);
-    color: #9ca3af;
+    background: var(--tag-gray-bg);
+    color: var(--tag-gray-text);
 }
 
 /* 가중치 4-6 (보통) */
 .weight-4, .weight-5, .weight-6 {
-    background: rgba(59, 130, 246, 0.2);
-    color: #60a5fa;
+    background: var(--tag-blue-bg);
+    color: var(--tag-blue-text);
 }
 
 /* 가중치 7-8 (높음) */
 .weight-7, .weight-8 {
-    background: rgba(251, 191, 36, 0.2);
-    color: #fbbf24;
+    background: var(--tag-yellow-bg);
+    color: var(--tag-yellow-text);
 }
 
 /* 가중치 9-10 (최고) */
 .weight-9, .weight-10 {
-    background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(248, 113, 113, 0.2));
-    color: #f87171;
+    background: var(--tag-red-bg);
+    color: var(--tag-red-text);
 }
 
 /* 힌트 텍스트 */
@@ -2298,3 +2383,727 @@ form {
     margin-top: 6px;
     font-style: italic;
 }
+
+/* =====================================================
+   Apple Theme — global overrides for legacy hardcoded styles
+   ===================================================== */
+
+[class*="gradient"],
+.band-stat-card,
+.project-card,
+.member-card,
+.dashboard-card,
+.eval-card,
+.contributor-card,
+.table-container,
+.content-card {
+    border-radius: var(--radius-lg);
+}
+
+.band-stat-card:hover,
+.project-card:hover,
+.member-card:hover {
+    transform: none;
+    box-shadow: var(--shadow-lg);
+}
+
+/* Replace legacy gradients */
+.logo h1,
+.nav-btn.active,
+.btn-primary,
+.stat-progress-fill,
+.contributor-rank,
+.eval-score-circle,
+.project-card-header,
+.rank-badge {
+    background-image: none !important;
+}
+
+/* Avatar — Notion tag colors (band별) */
+.member-avatar,
+.member-avatar-small,
+.member-avatar-large,
+.contributor-avatar {
+    background-image: none !important;
+}
+
+.member-avatar.band-a-avatar,
+.member-avatar-small.band-a-avatar,
+.member-avatar-large.band-a-avatar,
+.contributor-avatar.band-a-avatar {
+    background: var(--tag-orange-bg) !important;
+    color: var(--tag-orange-text) !important;
+}
+
+.member-avatar.band-b-avatar,
+.member-avatar-small.band-b-avatar,
+.member-avatar-large.band-b-avatar,
+.contributor-avatar.band-b-avatar {
+    background: var(--tag-blue-bg) !important;
+    color: var(--tag-blue-text) !important;
+}
+
+/* Progress bars */
+.stat-progress-fill,
+.progress-fill,
+.milestone-progress-fill {
+    background: var(--primary) !important;
+}
+
+.progress-bar,
+.stat-progress-bar {
+    background: var(--apple-gray-secondary) !important;
+}
+
+/* Tabs & filters — Apple pill style */
+.filter-tab,
+.tab-btn,
+.mini-tab,
+.toggle-btn {
+    border-radius: 980px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+}
+
+.filter-tab.active,
+.tab-btn.active,
+.mini-tab.active {
+    background: var(--apple-black) !important;
+    color: #ffffff !important;
+    border-color: var(--apple-black) !important;
+}
+
+.toggle-btn.active {
+    background: var(--apple-black) !important;
+    color: #ffffff !important;
+}
+
+/* Tables */
+table {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+thead th {
+    background: var(--apple-gray-bg);
+    color: var(--text-secondary);
+    font-weight: 500;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid var(--border-color);
+}
+
+tbody tr:hover {
+    background: rgba(0, 0, 0, 0.02);
+}
+
+/* Status badges */
+.status-badge,
+.badge {
+    border-radius: 980px;
+    font-weight: 500;
+    font-size: 12px;
+    letter-spacing: -0.01em;
+}
+
+/* Scrollbar — subtle Apple style */
+.main-content::-webkit-scrollbar,
+.modal-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.main-content::-webkit-scrollbar-thumb,
+.modal-content::-webkit-scrollbar-thumb {
+    background: var(--apple-gray-border);
+    border-radius: 980px;
+}
+
+/* Selection color */
+::selection {
+    background: rgba(0, 113, 227, 0.2);
+    color: var(--apple-black);
+}
+
+/* Links */
+a {
+    color: var(--apple-link);
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* ============================================================
+   데모 모드 배너 & 토스트
+   ============================================================ */
+.demo-banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px 20px;
+    background: #fff3cd;
+    border-bottom: 2px solid #f0c04a;
+    font-size: 13px;
+    color: #5a4500;
+    font-weight: 500;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.demo-banner-icon {
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.demo-banner-text {
+    flex: 1;
+    text-align: center;
+    max-width: 600px;
+}
+
+.demo-banner-login-btn {
+    flex-shrink: 0;
+    padding: 5px 14px;
+    background: #f0c04a;
+    color: #3d2e00;
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.demo-banner-login-btn:hover {
+    background: #e0a800;
+}
+
+/* 데모 배너가 표시될 때 앱 컨테이너를 아래로 밀기 */
+body:has(.demo-banner) .app-container {
+    margin-top: 44px;
+}
+
+/* 데모 모드 토스트 알림 */
+.demo-toast {
+    position: fixed;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    z-index: 10000;
+    background: #2d2d2d;
+    color: #fff;
+    padding: 12px 22px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s, transform 0.25s;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.22);
+}
+
+/* 프로젝트 최종 평가% 입력 */
+.form-hint-inline {
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--notion-text-tertiary, #9b9b9b);
+    margin-left: 4px;
+}
+.eval-score-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    max-width: 140px;
+}
+.eval-score-input-wrap input[type="number"] {
+    width: 90px;
+    padding: 8px 10px;
+    border: 1px solid var(--border-color, #e8e6e1);
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: right;
+    outline: none;
+}
+.eval-score-input-wrap input[type="number"]:focus {
+    border-color: var(--notion-blue, #2383e2);
+}
+.eval-score-unit {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--notion-text-secondary, #6b6b6b);
+}
+
+.demo-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+    pointer-events: auto;
+}
+
+/* ============================================================
+   대시보드 프로젝트 진척률 - 더 보기 버튼 & 레이아웃
+   ============================================================ */
+.progress-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+}
+.progress-item-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--notion-text, #37352f);
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-right: 8px;
+}
+.progress-item-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+.progress-item-pct {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--notion-text-secondary, #6b6b6b);
+    min-width: 34px;
+    text-align: right;
+}
+
+.dashboard-more-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    margin-top: 12px;
+    padding: 8px 0;
+    background: none;
+    border: 1px dashed var(--border-color, #e8e6e1);
+    border-radius: 6px;
+    font-size: 13px;
+    color: var(--notion-text-secondary, #6b6b6b);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+.dashboard-more-btn:hover {
+    background: var(--notion-bg, #f7f6f3);
+    color: var(--notion-blue, #2383e2);
+    border-color: var(--notion-blue, #2383e2);
+}
+
+/* ============================================================
+   종합점수 클릭 버튼
+   ============================================================ */
+.total-score-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: filter 0.15s, transform 0.1s, box-shadow 0.15s;
+    position: relative;
+}
+.total-score-btn:hover {
+    filter: brightness(0.93);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(0,0,0,0.12);
+}
+.total-score-btn:active { transform: translateY(0); }
+
+.score-calc-icon {
+    font-size: 10px;
+    opacity: 0.6;
+    transition: opacity 0.15s;
+}
+.total-score-btn:hover .score-calc-icon { opacity: 1; }
+
+/* ============================================================
+   종합점수 계산 팝업 모달
+   ============================================================ */
+.score-breakdown-modal {
+    width: 760px;
+    max-width: 96vw;
+}
+
+.score-breakdown-title-area {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.score-breakdown-body {
+    padding: 0 24px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+/* 공식 설명 박스 */
+.score-formula-box {
+    background: var(--notion-bg, #f7f6f3);
+    border: 1px solid var(--border-color, #e8e6e1);
+    border-radius: 8px;
+    padding: 14px 18px;
+}
+.formula-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--notion-text, #37352f);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.formula-desc {
+    font-size: 12px;
+    color: var(--notion-text-secondary, #6b6b6b);
+    line-height: 1.6;
+    margin-bottom: 10px;
+}
+.formula-expr {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.formula-expr code {
+    display: block;
+    background: #fff;
+    border: 1px solid var(--border-color, #e8e6e1);
+    border-radius: 5px;
+    padding: 5px 10px;
+    font-size: 12px;
+    color: var(--notion-blue, #2383e2);
+    font-family: 'SF Mono', 'Fira Code', monospace;
+}
+
+/* 상세 테이블 */
+.score-breakdown-table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--border-color, #e8e6e1);
+    border-radius: 8px;
+}
+.score-breakdown-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    min-width: 600px;
+}
+.score-breakdown-table thead th {
+    padding: 9px 10px;
+    background: var(--notion-bg, #f7f6f3);
+    color: var(--notion-text-secondary, #6b6b6b);
+    font-weight: 600;
+    font-size: 11px;
+    text-align: center;
+    border-bottom: 1px solid var(--border-color, #e8e6e1);
+    white-space: nowrap;
+}
+.score-breakdown-table thead th:first-child { text-align: left; }
+.score-breakdown-table tbody tr {
+    border-bottom: 1px solid var(--border-color, #e8e6e1);
+}
+.score-breakdown-table tbody tr:last-child { border-bottom: none; }
+.score-breakdown-table tbody tr:hover { background: var(--notion-bg, #f7f6f3); }
+.score-breakdown-table td {
+    padding: 9px 10px;
+    color: var(--notion-text, #37352f);
+}
+.breakdown-project-name {
+    font-weight: 500;
+    max-width: 180px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.breakdown-center { text-align: center; }
+.breakdown-project-score {
+    font-weight: 600;
+    color: var(--notion-blue, #2383e2);
+}
+.breakdown-weighted-score {
+    font-weight: 600;
+    color: var(--notion-text-secondary, #6b6b6b);
+}
+.breakdown-eval-score {
+    font-weight: 600;
+    color: var(--notion-text-secondary, #6b6b6b);
+}
+.breakdown-eval-score.eval-adjusted {
+    color: #d97706;
+    font-weight: 700;
+}
+.breakdown-final-score {
+    font-weight: 800;
+    color: var(--notion-blue, #2383e2);
+}
+
+/* 합계 행 */
+.score-breakdown-total {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 18px;
+    background: var(--notion-bg, #f7f6f3);
+    border: 1px solid var(--border-color, #e8e6e1);
+    border-radius: 8px;
+}
+.total-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--notion-text-secondary, #6b6b6b);
+}
+.total-value {
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--notion-blue, #2383e2);
+    min-width: 60px;
+    text-align: right;
+}
+
+/* ============================================================
+   대시보드 stat-card 클릭 링크
+   ============================================================ */
+.stat-card-link {
+    cursor: pointer;
+    position: relative;
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+.stat-card-link:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+}
+.stat-card-arrow {
+    position: absolute;
+    right: 16px;
+    bottom: 14px;
+    font-size: 11px;
+    color: var(--notion-text-tertiary, #9b9b9b);
+    opacity: 0;
+    transition: opacity 0.15s, right 0.15s;
+}
+.stat-card-link:hover .stat-card-arrow {
+    opacity: 1;
+    right: 12px;
+}
+
+/* ============================================================
+   구성원 리스트 관리 모달
+   ============================================================ */
+.member-profile-list-modal {
+    width: 480px;
+    max-width: 95vw;
+}
+
+.member-profile-list-body {
+    padding: 0 24px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* 신규 추가 폼 */
+.member-profile-add-form {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    background: var(--notion-bg, #f7f6f3);
+    border-radius: 8px;
+    border: 1px solid var(--border-color, #e8e6e1);
+}
+
+.member-profile-add-form input[type="text"] {
+    flex: 1;
+    padding: 7px 10px;
+    border: 1px solid var(--border-color, #e8e6e1);
+    border-radius: 6px;
+    font-size: 14px;
+    background: #fff;
+    outline: none;
+}
+.member-profile-add-form input[type="text"]:focus {
+    border-color: var(--notion-blue, #2383e2);
+}
+
+.profile-band-select {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.profile-band-radio {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+}
+.profile-band-radio input[type="radio"] {
+    display: none;
+}
+.profile-band-radio input[type="radio"]:checked + .band-badge {
+    box-shadow: 0 0 0 2px var(--notion-blue, #2383e2);
+}
+
+/* 리스트 테이블 */
+.member-profile-table-wrap {
+    max-height: 340px;
+    overflow-y: auto;
+    border: 1px solid var(--border-color, #e8e6e1);
+    border-radius: 8px;
+}
+
+.member-profile-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.member-profile-table thead th {
+    padding: 9px 12px;
+    background: var(--notion-bg, #f7f6f3);
+    color: var(--notion-text-secondary, #6b6b6b);
+    font-weight: 600;
+    font-size: 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color, #e8e6e1);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.member-profile-table tbody tr {
+    border-bottom: 1px solid var(--border-color, #e8e6e1);
+    transition: background 0.1s;
+}
+.member-profile-table tbody tr:last-child {
+    border-bottom: none;
+}
+.member-profile-table tbody tr:hover {
+    background: var(--notion-bg, #f7f6f3);
+}
+
+.member-profile-table td {
+    padding: 8px 12px;
+    vertical-align: middle;
+}
+
+.profile-name-cell .profile-name-edit {
+    display: inline-block;
+    min-width: 60px;
+    padding: 2px 4px;
+    border-radius: 4px;
+    cursor: text;
+    outline: none;
+}
+.profile-name-cell .profile-name-edit:focus {
+    background: #fff;
+    box-shadow: 0 0 0 2px var(--notion-blue, #2383e2);
+}
+
+.profile-band-radio-sm {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    cursor: pointer;
+    margin-right: 6px;
+}
+.profile-band-radio-sm input[type="radio"] {
+    display: none;
+}
+.profile-band-radio-sm input[type="radio"]:checked + .band-badge {
+    box-shadow: 0 0 0 2px var(--notion-blue, #2383e2);
+}
+
+.member-profile-empty {
+    text-align: center;
+    padding: 24px;
+    color: var(--notion-text-tertiary, #9b9b9b);
+    font-size: 13px;
+}
+
+/* 삭제 버튼 */
+.icon-btn {
+    background: none;
+    border: none;
+    padding: 5px 7px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--notion-text-secondary, #6b6b6b);
+    transition: background 0.15s, color 0.15s;
+}
+.icon-btn:hover { background: var(--notion-bg, #f7f6f3); }
+.danger-btn:hover { background: #ffeaea; color: #e03e3e; }
+
+/* ============================================================
+   구성원 추가 모달 — 빠른선택 칩
+   ============================================================ */
+.member-quick-select {
+    padding: 12px 24px 0;
+    display: none;
+}
+
+.quick-select-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--notion-text-secondary, #6b6b6b);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.quick-select-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.quick-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    border-radius: 20px;
+    border: 1px solid var(--border-color, #e8e6e1);
+    background: #fff;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+    color: var(--notion-text, #37352f);
+}
+.quick-chip:hover {
+    border-color: var(--notion-blue, #2383e2);
+    background: #edf4ff;
+}
+.quick-chip.selected {
+    border-color: var(--notion-blue, #2383e2);
+    background: #dbeafe;
+    font-weight: 600;
+}
+.quick-chip .chip-band {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 10px;
+    background: var(--notion-bg, #f7f6f3);
+}
+.band-a-chip .chip-band { background: var(--tag-blue-bg, #dbeafe); color: var(--tag-blue-text, #1e40af); }
+.band-b-chip .chip-band { background: var(--tag-green-bg, #d1fae5); color: var(--tag-green-text, #065f46); }

@@ -4,13 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Team General's - 성과 관리 시스템</title>
+    <link rel="icon" href="data:,">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+    <!-- Firebase SDK (오프라인이면 로드 실패 → 데모 모드로 자동 폴백) -->
+    <script>window.__firebaseLoadFailed = false;</script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"
+            onerror="window.__firebaseLoadFailed = true;"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"
+            onerror="window.__firebaseLoadFailed = true;"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"
+            onerror="window.__firebaseLoadFailed = true;"></script>
 </head>
 <body>
     <div class="app-container">
@@ -49,7 +57,7 @@
                 </button>
                 <button class="nav-btn" data-view="members">
                     <i class="fas fa-users"></i>
-                    <span>구성원</span>
+                    <span>구성원 현황</span>
                 </button>
                 <button class="nav-btn" data-view="evaluation">
                     <i class="fas fa-trophy"></i>
@@ -68,6 +76,10 @@
                         <i class="fas fa-plus"></i>
                         새 프로젝트
                     </button>
+                    <button class="btn btn-secondary" id="memberProfileListBtn" style="display: none;">
+                        <i class="fas fa-address-book"></i>
+                        구성원 리스트
+                    </button>
                     <button class="btn btn-primary" id="addMemberFromListBtn" style="display: none;">
                         <i class="fas fa-user-plus"></i>
                         구성원 추가
@@ -78,7 +90,7 @@
             <!-- 대시보드 뷰 -->
             <section class="view active" id="dashboardView">
                 <div class="stats-grid">
-                    <div class="stat-card">
+                    <div class="stat-card stat-card-link" onclick="app.switchView('projects')" title="프로젝트 화면으로 이동">
                         <div class="stat-icon blue">
                             <i class="fas fa-folder"></i>
                         </div>
@@ -86,8 +98,9 @@
                             <h3 id="totalProjects">0</h3>
                             <p>전체 프로젝트</p>
                         </div>
+                        <i class="fas fa-arrow-right stat-card-arrow"></i>
                     </div>
-                    <div class="stat-card">
+                    <div class="stat-card stat-card-link" onclick="app.switchToProjectsWithFilter('completed')" title="완료 프로젝트 보기">
                         <div class="stat-icon green">
                             <i class="fas fa-check-circle"></i>
                         </div>
@@ -95,8 +108,9 @@
                             <h3 id="completedProjects">0</h3>
                             <p>완료된 프로젝트</p>
                         </div>
+                        <i class="fas fa-arrow-right stat-card-arrow"></i>
                     </div>
-                    <div class="stat-card">
+                    <div class="stat-card stat-card-link" onclick="app.switchToProjectsWithFilter('in-progress')" title="진행중 프로젝트 보기">
                         <div class="stat-icon orange">
                             <i class="fas fa-spinner"></i>
                         </div>
@@ -104,8 +118,9 @@
                             <h3 id="inProgressProjects">0</h3>
                             <p>진행중인 프로젝트</p>
                         </div>
+                        <i class="fas fa-arrow-right stat-card-arrow"></i>
                     </div>
-                    <div class="stat-card">
+                    <div class="stat-card stat-card-link" onclick="app.switchView('members')" title="구성원 현황으로 이동">
                         <div class="stat-icon purple">
                             <i class="fas fa-users"></i>
                         </div>
@@ -113,6 +128,7 @@
                             <h3 id="totalMembers">0</h3>
                             <p>전체 구성원</p>
                         </div>
+                        <i class="fas fa-arrow-right stat-card-arrow"></i>
                     </div>
                 </div>
 
@@ -193,6 +209,35 @@
 
             <!-- 프로젝트 뷰 -->
             <section class="view" id="projectsView">
+                <div class="filter-section">
+                    <div class="filter-tabs" id="projectStatusFilter">
+                        <button class="filter-tab active" data-status="all">
+                            <i class="fas fa-folder-open"></i>
+                            전체
+                            <span class="filter-count" id="projectFilterCountAll">0</span>
+                        </button>
+                        <button class="filter-tab" data-status="in-progress">
+                            <i class="fas fa-spinner"></i>
+                            진행중
+                            <span class="filter-count" id="projectFilterCountInProgress">0</span>
+                        </button>
+                        <button class="filter-tab" data-status="completed">
+                            <i class="fas fa-check-circle"></i>
+                            완료
+                            <span class="filter-count" id="projectFilterCountCompleted">0</span>
+                        </button>
+                        <button class="filter-tab" data-status="planning">
+                            <i class="fas fa-pencil-alt"></i>
+                            기획중
+                            <span class="filter-count" id="projectFilterCountPlanning">0</span>
+                        </button>
+                        <button class="filter-tab" data-status="on-hold">
+                            <i class="fas fa-pause-circle"></i>
+                            보류
+                            <span class="filter-count" id="projectFilterCountOnHold">0</span>
+                        </button>
+                    </div>
+                </div>
                 <div class="project-list" id="projectList"></div>
             </section>
 
@@ -362,12 +407,71 @@
                         </select>
                     </div>
                 </div>
+                <div class="form-group">
+                    <label for="projectEvalScore">
+                        프로젝트 최종 평가 (%)
+                        <span class="form-hint-inline">— 구성원 1차 점수에 이 비율을 적용합니다. 기본값 100%는 조정 없음을 의미합니다.</span>
+                    </label>
+                    <div class="eval-score-input-wrap">
+                        <input type="number" id="projectEvalScore" value="100" min="0" step="1" placeholder="100">
+                        <span class="eval-score-unit">%</span>
+                    </div>
+                </div>
                 <p class="form-hint">평가 연도와 가중치는 구성원 종합평가에 반영됩니다</p>
                 <div class="form-actions">
                     <button type="button" class="btn btn-secondary" id="cancelProjectBtn">취소</button>
                     <button type="submit" class="btn btn-primary">저장</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- 구성원 리스트 관리 모달 -->
+    <div class="modal" id="memberProfileListModal">
+        <div class="modal-content member-profile-list-modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-address-book"></i> 구성원 리스트</h3>
+                <button class="close-btn" id="closeMemberProfileListModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="member-profile-list-body">
+                <!-- 신규 추가 폼 -->
+                <div class="member-profile-add-form">
+                    <input type="text" id="newProfileName" placeholder="이름 입력" maxlength="20">
+                    <div class="profile-band-select">
+                        <label class="profile-band-radio">
+                            <input type="radio" name="newProfileBand" value="A" checked>
+                            <span class="band-badge band-badge-a">A</span>
+                        </label>
+                        <label class="profile-band-radio">
+                            <input type="radio" name="newProfileBand" value="B">
+                            <span class="band-badge band-badge-b">B</span>
+                        </label>
+                    </div>
+                    <button class="btn btn-primary btn-sm" id="addProfileBtn">
+                        <i class="fas fa-plus"></i> 추가
+                    </button>
+                </div>
+                <!-- 리스트 테이블 -->
+                <div class="member-profile-table-wrap">
+                    <table class="member-profile-table">
+                        <thead>
+                            <tr>
+                                <th>이름</th>
+                                <th>밴드</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="memberProfileTableBody">
+                            <!-- JS로 렌더링 -->
+                        </tbody>
+                    </table>
+                    <div class="member-profile-empty" id="memberProfileEmpty" style="display:none;">
+                        등록된 구성원이 없습니다. 위에서 추가해 주세요.
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -379,6 +483,13 @@
                 <button class="close-btn" id="closeMemberModal">
                     <i class="fas fa-times"></i>
                 </button>
+            </div>
+            <!-- 리스트에서 선택 (추가 모드일 때만 표시) -->
+            <div class="member-quick-select" id="memberQuickSelect">
+                <div class="quick-select-label"><i class="fas fa-address-book"></i> 리스트에서 선택</div>
+                <div class="quick-select-chips" id="quickSelectChips">
+                    <!-- JS로 렌더링 -->
+                </div>
             </div>
             <form id="memberForm">
                 <input type="hidden" id="memberId">
@@ -605,10 +716,74 @@
         </div>
     </div>
 
+    <!-- 데모 더미 데이터 -->
+    <script src="demo-data.js"></script>
     <!-- Firebase 설정 -->
+    <script src="env.js"></script>
+    <script src="config/firebase.dev.js"></script>
+    <script src="config/firebase.prod.js"></script>
+    <script src="config/auth.dev.js"></script>
+    <script src="config/auth.prod.js"></script>
     <script src="firebase-config.js"></script>
     <!-- 인증 설정 -->
     <script src="auth-config.js"></script>
+    <!-- 종합점수 계산 팝업 모달 -->
+    <div class="modal" id="scoreBreakdownModal">
+        <div class="modal-content score-breakdown-modal">
+            <div class="modal-header">
+                <div class="score-breakdown-title-area">
+                    <h3 id="scoreBreakdownName">홍길동</h3>
+                    <span id="scoreBreakdownBand" class="band-badge band-badge-a">A</span>
+                </div>
+                <button class="close-btn" id="closeScoreBreakdownModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="score-breakdown-body">
+                <!-- 공식 설명 -->
+                <div class="score-formula-box">
+                    <div class="formula-title"><i class="fas fa-calculator"></i> 점수 산출 방식</div>
+                    <div class="formula-desc">
+                        각 프로젝트마다 점수를 산출(1차)하고, 프로젝트 최종 평가%를 적용해 최종 점수를 확정합니다.<br>
+                        프로젝트에 많이 참여할수록 추가 점수를 획득합니다.
+                    </div>
+                    <div class="formula-expr">
+                        <code>프로젝트 점수 = 진척도×0.25 + 기여도×2 + 협업×1.5 + 주도성×1.5 + 실력×2</code>
+                        <code>1차 결과 = 프로젝트 점수 × (가중치 ÷ 10)</code>
+                        <code>최종 점수 = 1차 결과 × (최종 평가% ÷ 100)</code>
+                        <code>종합점수 = Σ 최종 점수</code>
+                    </div>
+                </div>
+                <!-- 프로젝트별 상세 테이블 -->
+                <div class="score-breakdown-table-wrap">
+                        <table class="score-breakdown-table" id="scoreBreakdownTable">
+                            <thead>
+                                <tr>
+                                    <th>프로젝트</th>
+                                    <th>가중치</th>
+                                    <th>진척도</th>
+                                    <th>기여도</th>
+                                    <th>협업</th>
+                                    <th>주도성</th>
+                                    <th>실력</th>
+                                    <th>프로젝트 점수</th>
+                                    <th>1차 결과</th>
+                                    <th>최종 평가%</th>
+                                    <th>최종 점수</th>
+                                </tr>
+                            </thead>
+                            <tbody id="scoreBreakdownTableBody"></tbody>
+                        </table>
+                </div>
+                <!-- 총합 -->
+                <div class="score-breakdown-total">
+                    <span class="total-label">종합점수 합계</span>
+                    <span class="total-value" id="scoreBreakdownTotal">0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Firebase DataStore -->
     <script src="firebase-datastore.js"></script>
     <!-- 메인 스크립트 -->
