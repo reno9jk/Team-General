@@ -53,6 +53,7 @@ class FirebaseDataStore {
                     this.userId = user.uid;
                     this.isDemoMode = false;
                     this.hideDemoBanner();
+                    this.showSidebarUser(user.email);
                     await this.loadAll();
                     // 데이터 변경 콜백이 있다면 호출
                     if (this.onDataChanged) {
@@ -116,6 +117,32 @@ class FirebaseDataStore {
     hideDemoBanner() {
         const banner = document.getElementById('demoBanner');
         if (banner) banner.remove();
+    }
+
+    showSidebarUser(email) {
+        const userEl = document.getElementById('sidebarUser');
+        const emailEl = document.getElementById('sidebarUserEmail');
+        const logoutBtn = document.getElementById('sidebarLogoutBtn');
+        if (!userEl) return;
+
+        if (emailEl) emailEl.textContent = email || '';
+        userEl.style.display = 'flex';
+
+        if (logoutBtn && !logoutBtn._bound) {
+            logoutBtn._bound = true;
+            logoutBtn.addEventListener('click', () => this.handleLogout());
+        }
+    }
+
+    async handleLogout() {
+        if (!confirm('로그아웃 하시겠습니까?')) return;
+        try {
+            await this.auth.signOut();
+            // 로그아웃 후 페이지 새로고침 (데모 모드로 복귀)
+            window.location.reload();
+        } catch (e) {
+            console.error('로그아웃 실패:', e);
+        }
     }
 
     // 데모 모드에서 저장/수정/삭제 차단
