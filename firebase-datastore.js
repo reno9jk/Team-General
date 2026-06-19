@@ -51,6 +51,8 @@ class FirebaseDataStore {
                     }
                     
                     this.userId = user.uid;
+                    this.isDemoMode = false;
+                    this.hideDemoBanner();
                     await this.loadAll();
                     // 데이터 변경 콜백이 있다면 호출
                     if (this.onDataChanged) {
@@ -109,6 +111,11 @@ class FirebaseDataStore {
         `;
         // body 하단에 삽입
         document.body.appendChild(banner);
+    }
+
+    hideDemoBanner() {
+        const banner = document.getElementById('demoBanner');
+        if (banner) banner.remove();
     }
 
     // 데모 모드에서 저장/수정/삭제 차단
